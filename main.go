@@ -24,6 +24,7 @@ func icsHandler(w http.ResponseWriter, r *http.Request) {
     var e error
     if time.Since(lastRequest).Seconds() > 60 * 60 {
         log.Log.Info("One hour since last request, remerging ics files")
+        log.ToWebhook(c.WebHook, "Invalidated cache, remerging ics files")
         calender, e = ical.Merge(c)
         if e != nil {
             log.Log.Error("Error merging ical files", e)
@@ -43,6 +44,7 @@ func icsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
     log.Log.Info("Request took", time.Since(now).Milliseconds(), "ms")
+    log.ToWebhook(c.WebHook, "Served ics file in " + time.Since(now).String())
 }
 
 

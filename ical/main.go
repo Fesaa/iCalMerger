@@ -11,7 +11,6 @@ import (
 
 type LoadediCal struct {
     source c.SourceInfo
-    originalEvents []*ics.VEvent
     events []*ics.VEvent
     isFiltered bool
 }
@@ -22,14 +21,6 @@ func (iCal *LoadediCal) Events() []*ics.VEvent {
 
 func (iCal *LoadediCal) Source() c.SourceInfo {
     return iCal.source
-}
-
-func (iCal *LoadediCal) OriginalEvents() []*ics.VEvent {
-    if !iCal.isFiltered {
-        log.Log.Debug("Getting original events from unfiltered calendar: `", iCal.source.Name, "`")
-    }
-
-    return iCal.originalEvents
 }
 
 func (iCal *LoadediCal) FilteredEvents() ([]*ics.VEvent, error) {
@@ -49,11 +40,6 @@ func (iCal *LoadediCal) Filter() error {
     }
     var filtered []*ics.VEvent = []*ics.VEvent{}
     for _, event := range iCal.events {
-        summary := event.GetProperty(ics.ComponentPropertySummary)
-        if summary == nil {
-            return errors.New("No summary found for event " + event.Id())
-        }
-
         for _, rule := range iCal.source.Rules {
             if rule.CheckRule(event) {
                 filtered = append(filtered, event)
@@ -61,7 +47,6 @@ func (iCal *LoadediCal) Filter() error {
             }
         }
     }
-
     iCal.events = filtered
     iCal.isFiltered = true
     return nil
@@ -82,5 +67,5 @@ func NewLoadediCal(source c.SourceInfo) (*LoadediCal, error) {
     if err != nil {
         return nil, err
     }
-    return &LoadediCal{source: source, originalEvents: cal.Events(), events: cal.Events(), isFiltered: false}, nil
+    return &LoadediCal{source: source, events: cal.Events(), isFiltered: false}, nil
 }

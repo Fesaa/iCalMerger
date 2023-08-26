@@ -21,6 +21,7 @@ type SourceInfo struct {
 }
 
 type Config struct {
+    WebHook string `yaml:"webhook"`
     Adress string `yaml:"adress"`
     Port string `yaml:"port"`
     XWRName string `yaml:"xwr_name"`

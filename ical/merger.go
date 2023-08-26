@@ -14,7 +14,9 @@ func Merge(c *config.Config) (*ics.Calendar, error) {
     for _, source := range c.Sources {
         cal, er := NewLoadediCal(source)
         if er != nil {
-            panic(er)
+            log.Log.Error("Error loading ", source.Name, ": ", er)
+            log.ToWebhook(c.WebHook, "Could not complete request, error loading " + source.Name + er.Error())
+            return nil, er
         }
         log.Log.Info("Loaded ", len(cal.Events()), " events from ", cal.Source().Name)
         cals = append(cals, cal)
