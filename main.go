@@ -21,6 +21,7 @@ var lastRequest time.Time
 
 func icsHandler(w http.ResponseWriter, r *http.Request) {
     now := time.Now()
+    lastRequest = now
 
     var e error
     if time.Since(lastRequest).Seconds() > 60 * 60 {
