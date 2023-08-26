@@ -11,27 +11,26 @@ import (
 	"github.com/Fesaa/ical-merger/config"
 	"github.com/Fesaa/ical-merger/ical"
 	"github.com/Fesaa/ical-merger/log"
-	ics "github.com/arran4/golang-ical"
 )
 
 
 var c *config.Config
-var calender *ics.Calendar
+var calender string
 var lastRequest time.Time
 
 func icsHandler(w http.ResponseWriter, r *http.Request) {
     now := time.Now()
-    var e error
     if time.Since(lastRequest).Seconds() > 60 * 60 {
         log.Log.Info("One hour since last request, remerging ics files")
         log.ToWebhook(c.WebHook, "Invalidated cache, remerging ics files")
-        calender, e = ical.Merge(c)
+        cal, e := ical.Merge(c)
         if e != nil {
             log.Log.Error("Error merging ical files", e)
             http.Error(w, "Iternal Server Error", http.StatusInternalServerError)
             return
         }
         lastRequest = now
+        calender = cal.Serialize()
     } else {
         log.Log.Info("Returning cached ics file")
     }
@@ -39,7 +38,7 @@ func icsHandler(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
 	w.Header().Set("Content-Disposition", "attachment; filename=event.ics")
 
-    _, err := io.Copy(w, strings.NewReader(calender.Serialize()))
+    _, err := io.Copy(w, strings.NewReader(calender))
     if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
