@@ -20,7 +20,6 @@ var calender *ics.Calendar
 var lastRequest time.Time
 
 func icsHandler(w http.ResponseWriter, r *http.Request) {
-    log.Log.Info("Request from", r.RemoteAddr)
     now := time.Now()
     var e error
     if time.Since(lastRequest).Seconds() > 60 * 60 {
