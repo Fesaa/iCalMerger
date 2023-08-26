@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/withmandala/go-log"
 )
@@ -34,9 +35,17 @@ func ToWebhook(url string, msg string) {
             return
         }
 
-        _, e = http.NewRequest("POST", url, bytes.NewBuffer(payloadJson))
+        req, e := http.NewRequest("POST", url, bytes.NewBuffer(payloadJson))
         if e != nil {
             Log.Error("Error creating webhook request", e)
         }
+
+        req.Header.Set("Content-Type", "application/json")
+
+        client := &http.Client{Timeout: 5 * time.Second}
+        _, e = client.Do(req)
+        if e != nil {
+            Log.Error("Error sending webhook", e)
+        } 
     }()
 }
