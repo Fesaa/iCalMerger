@@ -21,8 +21,6 @@ var lastRequest time.Time
 
 func icsHandler(w http.ResponseWriter, r *http.Request) {
     now := time.Now()
-    lastRequest = now
-
     var e error
     if time.Since(lastRequest).Seconds() > 60 * 60 {
         log.Log.Info("One hour since last request, remerging ics files")
@@ -32,6 +30,7 @@ func icsHandler(w http.ResponseWriter, r *http.Request) {
             http.Error(w, "Iternal Server Error", http.StatusInternalServerError)
             return
         }
+        lastRequest = now
     } else {
         log.Log.Info("Returning cached ics file")
     }
