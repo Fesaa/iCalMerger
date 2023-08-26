@@ -20,6 +20,7 @@ var calender *ics.Calendar
 var lastRequest time.Time
 
 func icsHandler(w http.ResponseWriter, r *http.Request) {
+    log.Log.Info("Request from", r.RemoteAddr)
     now := time.Now()
     var e error
     if time.Since(lastRequest).Seconds() > 60 * 60 {
@@ -61,7 +62,7 @@ func main() {
 
     log.Log.Info("Starting server on", c.Adress + ":" + c.Port)
     mux := http.NewServeMux()
-    mux.HandleFunc("/event.ics", icsHandler)
+    mux.HandleFunc("/calender.ics", icsHandler)
     e = http.ListenAndServe(c.Adress + ":" + c.Port, mux)
     if errors.Is(e, http.ErrServerClosed) {
         log.Log.Info("Server died: ", e)
