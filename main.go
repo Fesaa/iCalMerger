@@ -51,7 +51,7 @@ func main() {
     log.Init(len(args) > 0 && args[0] == "-debug")
 
     var e error
-	c, e = config.LoadConfig("config.yaml")
+	c, e = config.LoadConfig("./config.yaml")
 	if e != nil {
 		panic(e)
 	
