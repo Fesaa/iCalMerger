@@ -16,28 +16,28 @@ import (
 
 var c *config.Config
 var calender string
-var lastRequest time.Time
 
-func icsHandler(w http.ResponseWriter, r *http.Request) {
-    now := time.Now()
-    if time.Since(lastRequest).Seconds() > 60 * 60 {
+func heartbeat() {
+    for range time.Tick(time.Hour) {
+        now := time.Now()
         log.Log.Info("One hour since last request, remerging ics files")
         log.ToWebhook(c.WebHook, "Invalidated cache, remerging ics files")
         cal, e := ical.Merge(c)
         if e != nil {
             log.Log.Error("Error merging ical files", e)
-            http.Error(w, "Iternal Server Error", http.StatusInternalServerError)
+            log.ToWebhook(c.WebHook, "Error merging ical files: " + e.Error())
             return
         }
-        lastRequest = now
         calender = cal.Serialize()
-    } else {
-        log.Log.Info("Returning cached ics file")
+        log.ToWebhook(c.WebHook, "Merged ical files in " + time.Since(now).String())
     }
+}
 
+
+func icsHandler(w http.ResponseWriter, r *http.Request) {
+    now := time.Now()
     w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
 	w.Header().Set("Content-Disposition", "attachment; filename=event.ics")
-
     _, err := io.Copy(w, strings.NewReader(calender))
     if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -58,8 +58,7 @@ func main() {
 	
     }
 
-    lastRequest = time.Now().Add(-time.Hour * 2)
-
+    go heartbeat()
     log.Log.Info("Starting server on", c.Adress + ":" + c.Port)
     mux := http.NewServeMux()
     mux.HandleFunc("/calender.ics", icsHandler)
