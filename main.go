@@ -17,19 +17,25 @@ import (
 var c *config.Config
 var calender string
 
+
+func updateCache() {
+    now := time.Now()
+    log.Log.Info("One hour since last request, remerging ics files")
+    log.ToWebhook(c.WebHook, "Invalidated cache, remerging ics files")
+    cal, e := ical.Merge(c)
+    if e != nil {
+        log.Log.Error("Error merging ical files", e)
+        log.ToWebhook(c.WebHook, "Error merging ical files: " + e.Error())
+        return
+    }
+    calender = cal.Serialize()
+    log.ToWebhook(c.WebHook, "Merged ical files in " + time.Since(now).String())
+}
+
+
 func heartbeat() {
     for range time.Tick(time.Hour) {
-        now := time.Now()
-        log.Log.Info("One hour since last request, remerging ics files")
-        log.ToWebhook(c.WebHook, "Invalidated cache, remerging ics files")
-        cal, e := ical.Merge(c)
-        if e != nil {
-            log.Log.Error("Error merging ical files", e)
-            log.ToWebhook(c.WebHook, "Error merging ical files: " + e.Error())
-            return
-        }
-        calender = cal.Serialize()
-        log.ToWebhook(c.WebHook, "Merged ical files in " + time.Since(now).String())
+        updateCache()
     }
 }
 
@@ -58,6 +64,7 @@ func main() {
 	
     }
 
+    updateCache()
     go heartbeat()
     log.Log.Info("Starting server on", c.Adress + ":" + c.Port)
     mux := http.NewServeMux()
