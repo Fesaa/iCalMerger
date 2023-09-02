@@ -29,8 +29,6 @@ type Config struct {
 }
 
 func LoadConfig(file_path string) (*Config, error) {
-	init_map()
-
 	content, e := os.ReadFile(file_path)
 	if e != nil {
 		return nil, e

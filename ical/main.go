@@ -23,25 +23,23 @@ func (iCal *LoadediCal) Source() c.SourceInfo {
 	return iCal.source
 }
 
-func (iCal *LoadediCal) FilteredEvents() ([]*ics.VEvent, error) {
+func (iCal *LoadediCal) FilteredEvents() []*ics.VEvent {
 	if !iCal.isFiltered {
-		e := iCal.Filter()
-		if e != nil {
-			return nil, e
-		}
+		iCal.Filter()
 	}
 
-	return iCal.events, nil
+	return iCal.events
 }
 
-func (iCal *LoadediCal) Filter() error {
+func (iCal *LoadediCal) Filter() {
 	if iCal.isFiltered {
 		log.Log.Warn("Filtering an already filtered calendar: `", iCal.source.Name, "`")
 	}
-	var filtered []*ics.VEvent = []*ics.VEvent{}
+	filtered := []*ics.VEvent{}
+
 	for _, event := range iCal.events {
 		for _, rule := range iCal.source.Rules {
-			if rule.CheckRule(event) {
+			if rule.Apply(event) {
 				filtered = append(filtered, event)
 				break
 			}
@@ -49,7 +47,6 @@ func (iCal *LoadediCal) Filter() error {
 	}
 	iCal.events = filtered
 	iCal.isFiltered = true
-	return nil
 }
 
 func NewLoadediCal(source c.SourceInfo) (*LoadediCal, error) {

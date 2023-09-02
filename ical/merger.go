@@ -22,19 +22,16 @@ func Merge(c *config.Config) (*ics.Calendar, error) {
 		cals = append(cals, cal)
 	}
 
-	return mergeLoadediCals(c, cals)
+	return mergeLoadediCals(c, cals), nil
 }
 
-func mergeLoadediCals(c *config.Config, cals []*LoadediCal) (*ics.Calendar, error) {
+func mergeLoadediCals(c *config.Config, cals []*LoadediCal) *ics.Calendar {
 	calender := ics.NewCalendar()
 	calender.SetXWRCalName(c.XWRName)
 
 	var XWRDesc string = ""
 	for _, iCal := range cals {
-		events, error := iCal.FilteredEvents()
-		if error != nil {
-			return nil, error
-		}
+		events := iCal.FilteredEvents()
 
 		XWRDesc += iCal.Source().Name + " "
 		log.Log.Info("Adding ", len(events), " events from ", iCal.Source().Name)
@@ -46,5 +43,5 @@ func mergeLoadediCals(c *config.Config, cals []*LoadediCal) (*ics.Calendar, erro
 
 	calender.SetXWRCalDesc(strings.TrimSuffix(XWRDesc, " "))
 
-	return calender, nil
+	return calender
 }
