@@ -38,11 +38,8 @@ func (iCal *LoadediCal) Filter() {
 	filtered := []*ics.VEvent{}
 
 	for _, event := range iCal.events {
-		for _, rule := range iCal.source.Rules {
-			if rule.Apply(event) {
-				filtered = append(filtered, event)
-				break
-			}
+		if iCal.source.Check(event) {
+			filtered = append(filtered, event)
 		}
 	}
 	iCal.events = filtered

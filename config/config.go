@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 
+	ics "github.com/arran4/golang-ical"
 	"gopkg.in/yaml.v2"
 )
 
@@ -26,6 +27,15 @@ type Config struct {
 	Heartbeat int          `yaml:"heartbeat"`
 	XWRName   string       `yaml:"xwr_name"`
 	Sources   []SourceInfo `yaml:"sources"`
+}
+
+func (s *SourceInfo) Check(event *ics.VEvent) bool {
+	for _, rule := range s.Rules {
+		if rule.Apply(event) {
+			return true
+		}
+	}
+	return false
 }
 
 func LoadConfig(file_path string) (*Config, error) {
