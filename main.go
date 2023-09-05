@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -18,7 +19,7 @@ var calender string
 
 func updateCache() {
 	now := time.Now()
-	log.Log.Info("One hour since last request, remerging ics files")
+	log.Log.Info(fmt.Sprintf("%d minute(s) since last request, remerging ics files", c.Heartbeat))
 	log.ToWebhook(c.WebHook, "Invalidated cache, remerging ics files")
 	cal, e := ical.Merge(c)
 	if e != nil {
