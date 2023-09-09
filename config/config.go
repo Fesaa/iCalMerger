@@ -20,13 +20,18 @@ type SourceInfo struct {
 	Rules []rule `yaml:"rules"`
 }
 
-type Config struct {
-	WebHook   string       `yaml:"webhook"`
-	Adress    string       `yaml:"adress"`
-	Port      string       `yaml:"port"`
+type Source struct {
+	EndPoint  string       `yaml:"end_point"`
 	Heartbeat int          `yaml:"heartbeat"`
 	XWRName   string       `yaml:"xwr_name"`
-	Sources   []SourceInfo `yaml:"sources"`
+	Info      []SourceInfo `yaml:"info"`
+}
+
+type Config struct {
+	WebHook string   `yaml:"webhook"`
+	Adress  string   `yaml:"adress"`
+	Port    string   `yaml:"port"`
+	Sources []Source `yaml:"sources"`
 }
 
 func (s *SourceInfo) Check(event *ics.VEvent) bool {

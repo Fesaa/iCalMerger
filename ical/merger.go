@@ -1,6 +1,7 @@
 package ical
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/Fesaa/ical-merger/config"
@@ -8,29 +9,43 @@ import (
 	ics "github.com/arran4/golang-ical"
 )
 
-func Merge(c *config.Config) (*ics.Calendar, error) {
+type CustomCalender struct {
+	source config.Source
+	loaded []*LoadediCal
+}
 
+func FromSource(source config.Source) CustomCalender {
+	return CustomCalender{source: source}
+}
+
+func (c *CustomCalender) GetSource() config.Source {
+	return c.source
+}
+
+func (c *CustomCalender) Merge(url string) (*ics.Calendar, error) {
 	cals := []*LoadediCal{}
-	for _, source := range c.Sources {
+	for _, source := range c.source.Info {
 		cal, er := NewLoadediCal(source)
 		if er != nil {
 			log.Log.Error("Error loading ", source.Name, ": ", er)
-			log.ToWebhook(c.WebHook, "Could not complete request, error loading "+source.Name+er.Error())
+			log.ToWebhook(url, fmt.Sprintf("[%s] Could not complete request, error loading "+source.Name+er.Error(), c.source.XWRName))
 			return nil, er
 		}
 		log.Log.Info("Loaded ", len(cal.Events()), " events from ", cal.Source().Name)
 		cals = append(cals, cal)
 	}
 
-	return mergeLoadediCals(c, cals), nil
+	c.loaded = cals
+
+	return c.mergeLoadediCals(), nil
 }
 
-func mergeLoadediCals(c *config.Config, cals []*LoadediCal) *ics.Calendar {
+func (c *CustomCalender) mergeLoadediCals() *ics.Calendar {
 	calender := ics.NewCalendar()
-	calender.SetXWRCalName(c.XWRName)
+	calender.SetXWRCalName(c.source.XWRName)
 
 	var XWRDesc string = ""
-	for _, iCal := range cals {
+	for _, iCal := range c.loaded {
 		events := iCal.FilteredEvents()
 
 		XWRDesc += iCal.Source().Name + " "
