@@ -30,13 +30,14 @@ sources:
             - Hobbies
     - name: Work
       url: <URL2>
-      rules:
-      - name: Work
-        component: SUMMARY
-        check: NOT_CONTAINS
-        data:
-          - Meeting
-          - Team Building
+      modifiers:
+        - name: Work starting soon # Used as alarm nam
+          action: ALARM
+          data: "-PT60M" # one hour
+          rules:
+            - name: ""
+              check: "FIRST_OF_DAY"
+
 - end_point: full_calender
   heartbeat: 30
   xwr_name: My Full Calender
