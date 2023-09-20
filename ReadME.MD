@@ -35,8 +35,7 @@ sources:
           action: ALARM
           data: "-PT60M" # one hour
           rules:
-            - name: ""
-              check: "FIRST_OF_DAY"
+              - check: "FIRST_OF_DAY"
 
 - end_point: full_calender
   heartbeat: 30
