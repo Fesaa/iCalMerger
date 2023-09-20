@@ -3,37 +3,38 @@ package config
 import (
 	"os"
 
-	ics "github.com/arran4/golang-ical"
 	"gopkg.in/yaml.v2"
 )
 
-type rule struct {
+type Rule struct {
 	Name      string   `yaml:"name"`
-	Component string   `yaml:"component"`
+	Component string   `yaml:"component,omitempty"`
 	Check     string   `yaml:"check"`
-	Data      []string `yaml:"data"`
+	Data      []string `yaml:"data,omitempty"`
 }
 
 type SourceInfo struct {
-	Name  string `yaml:"name"`
-	Url   string `yaml:"url"`
-	Rules []rule `yaml:"rules,omitempty"`
+	Name      string     `yaml:"name"`
+	Url       string     `yaml:"url"`
+	Rules     []Rule     `yaml:"rules,omitempty"`
+	Modifiers []Modifier `yaml:"modifiers,omitempty"`
 }
 
 type Action string
 
 const (
-	APPEND  Action = "append"
-	REPLACE Action = "replace"
-	INSERT  Action = "insert"
-	PREPEND Action = "prepend"
+	APPEND  Action = "APPEND"
+	REPLACE Action = "REPLACE"
+	PREPEND Action = "PREPEND"
+	ALARM   Action = "ALARM"
 )
 
 type Modifier struct {
 	Name      string `yaml:"name"`
-	Component string `yaml:"component"`
+	Component string `yaml:"component,omitempty"`
 	Action    Action `yaml:"action"`
 	Data      string `yaml:"data"`
+	Filters   []Rule `yaml:"rules,omitempty"`
 }
 
 type Source struct {
@@ -41,7 +42,6 @@ type Source struct {
 	Heartbeat int          `yaml:"heartbeat"`
 	XWRName   string       `yaml:"xwr_name"`
 	Info      []SourceInfo `yaml:"info"`
-	Modifiers []Modifier   `yaml:"modifiers,omitempty"`
 }
 
 type Config struct {
@@ -49,18 +49,6 @@ type Config struct {
 	Adress  string   `yaml:"adress"`
 	Port    string   `yaml:"port"`
 	Sources []Source `yaml:"sources"`
-}
-
-func (s *SourceInfo) Check(event *ics.VEvent) bool {
-	if s.Rules == nil || len(s.Rules) == 0 {
-		return true
-	}
-	for _, rule := range s.Rules {
-		if rule.Apply(event) {
-			return true
-		}
-	}
-	return false
 }
 
 func LoadConfig(file_path string) (*Config, error) {
