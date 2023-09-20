@@ -3,6 +3,10 @@ name: Build ICal merger
 on:
   push:
     branches: [ "master", "main" ]
+    paths:
+      - '**.go'
+      - 'go.mod'
+      - 'go.sum'
   workflow_dispatch:
 
 jobs:
