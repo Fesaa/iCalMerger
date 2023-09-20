@@ -17,7 +17,23 @@ type rule struct {
 type SourceInfo struct {
 	Name  string `yaml:"name"`
 	Url   string `yaml:"url"`
-	Rules []rule `yaml:"rules"`
+	Rules []rule `yaml:"rules,omitempty"`
+}
+
+type Action string
+
+const (
+	APPEND  Action = "append"
+	REPLACE Action = "replace"
+	INSERT  Action = "insert"
+	PREPEND Action = "prepend"
+)
+
+type Modifier struct {
+	Name      string `yaml:"name"`
+	Component string `yaml:"component"`
+	Action    Action `yaml:"action"`
+	Data      string `yaml:"data"`
 }
 
 type Source struct {
@@ -25,6 +41,7 @@ type Source struct {
 	Heartbeat int          `yaml:"heartbeat"`
 	XWRName   string       `yaml:"xwr_name"`
 	Info      []SourceInfo `yaml:"info"`
+	Modifiers []Modifier   `yaml:"modifiers,omitempty"`
 }
 
 type Config struct {
@@ -35,6 +52,9 @@ type Config struct {
 }
 
 func (s *SourceInfo) Check(event *ics.VEvent) bool {
+	if s.Rules == nil || len(s.Rules) == 0 {
+		return true
+	}
 	for _, rule := range s.Rules {
 		if rule.Apply(event) {
 			return true
