@@ -1,6 +1,6 @@
 # iCal Merger
 Very simple web server used to merge and filter .ics files provided by a url. 
-Configuration is done via a config.yaml file, calenders can be filtered with rules which must point to a component (Defined [here](https://pkg.go.dev/github.com/arran4/golang-ical#Property)) and use a specific [check](config/checks.go#L10).
+Configuration is done via a config.yaml file, calenders can be filtered with rules which must point to a component (Defined [here](https://pkg.go.dev/github.com/arran4/golang-ical#Property)) and use a specific [check](ical/checks.go#L24).
 
 Example:
 ```yaml
