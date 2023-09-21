@@ -7,7 +7,7 @@ import (
 )
 
 type Rule struct {
-	Name      string   `yaml:"name,omitempt"`
+	Name      string   `yaml:"name,omitempty"`
 	Component string   `yaml:"component,omitempty"`
 	Check     string   `yaml:"check"`
 	Data      []string `yaml:"data,omitempty"`
