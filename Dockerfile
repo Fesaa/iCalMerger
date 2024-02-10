@@ -11,6 +11,7 @@ FROM debian:stable-slim
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y ca-certificates
 COPY --from=go-stage /ical-merger /app/ical-merger
 
 EXPOSE 8080
