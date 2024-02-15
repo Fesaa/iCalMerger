@@ -24,6 +24,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	for _, s := range c.Sources {
+		log.Log.Debugf("Adding source %s", s.EndPoint)
 		handler := *server.NewServerHandler(ical.FromSource(s), c.WebHook)
 		handler.Bootstrap()
 		mux.HandleFunc(fmt.Sprintf("/%s.ics", s.EndPoint), handler.IcsHandler)

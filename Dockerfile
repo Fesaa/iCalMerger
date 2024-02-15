@@ -15,4 +15,4 @@ COPY --from=go-stage /ical-merger /app/ical-merger
 
 EXPOSE 8080
 
-CMD ["/app/ical-merger"]
+CMD ["/app/ical-merger -debug"]
