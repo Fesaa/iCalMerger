@@ -2,15 +2,25 @@ package config
 
 import (
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 )
 
 type Rule struct {
-	Name      string   `yaml:"name,omitempty"`
-	Component string   `yaml:"component,omitempty"`
-	Check     string   `yaml:"check"`
-	Data      []string `yaml:"data,omitempty"`
+	Name          string   `yaml:"name,omitempty"`
+	Component     string   `yaml:"component,omitempty"`
+	Check         string   `yaml:"check"`
+	CaseSensitive bool     `yaml:"case"`
+	Data          []string `yaml:"data,omitempty"`
+}
+
+func (r *Rule) Transform(s string) string {
+	if r.CaseSensitive {
+		return s
+	}
+
+	return strings.ToLower(s)
 }
 
 type SourceInfo struct {

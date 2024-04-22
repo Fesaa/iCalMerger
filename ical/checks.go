@@ -23,7 +23,9 @@ func (ical *LoadediCal) Check(event *ics.VEvent) bool {
 
 var checks = map[string]func(r *config.Rule, input string) bool{
 	"CONTAINS": func(r *config.Rule, input string) bool {
+		input = r.Transform(input)
 		for _, s := range r.Data {
+			s = r.Transform(s)
 			if strings.Contains(input, s) {
 				return true
 			}
@@ -31,7 +33,9 @@ var checks = map[string]func(r *config.Rule, input string) bool{
 		return false
 	},
 	"NOT_CONTAINS": func(r *config.Rule, input string) bool {
+		input = r.Transform(input)
 		for _, s := range r.Data {
+			s = r.Transform(s)
 			if strings.Contains(input, s) {
 				return false
 			}
@@ -39,7 +43,9 @@ var checks = map[string]func(r *config.Rule, input string) bool{
 		return true
 	},
 	"EQUALS": func(r *config.Rule, input string) bool {
+		input = r.Transform(input)
 		for _, s := range r.Data {
+			s = r.Transform(s)
 			if input == s {
 				return true
 			}
@@ -47,7 +53,9 @@ var checks = map[string]func(r *config.Rule, input string) bool{
 		return false
 	},
 	"NOT_EQUALS": func(r *config.Rule, input string) bool {
+		input = r.Transform(input)
 		for _, s := range r.Data {
+			s = r.Transform(s)
 			if input == s {
 				return false
 			}
