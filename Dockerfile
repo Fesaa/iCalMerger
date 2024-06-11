@@ -7,11 +7,11 @@ COPY . ./
 RUN go mod download
 RUN go build -o /ical-merger
 
-FROM debian:stable-slim
+FROM frolvlad/alpine-glibc:latest
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y ca-certificates
+RUN apk add --no-cache ca-certificates
 COPY --from=go-stage /ical-merger /app/ical-merger
 
 EXPOSE 8080
