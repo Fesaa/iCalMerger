@@ -10,7 +10,7 @@ require (
 
 require (
 	github.com/smartystreets/goconvey v1.8.1 // indirect
-	golang.org/x/crypto v0.22.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
-	golang.org/x/term v0.19.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/term v0.27.0 // indirect
 )
