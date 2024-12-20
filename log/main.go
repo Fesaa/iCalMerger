@@ -20,8 +20,11 @@ func Init(debug bool) {
 }
 
 func ToWebhook(url string, msg string) {
-	Log.Debug("Sending webhook with content: ", msg)
+	if url == "" {
+		return
+	}
 
+	Log.Debug("Sending webhook with content: ", msg)
 	go func() {
 		paylout := map[string]interface{}{
 			"content":    msg,

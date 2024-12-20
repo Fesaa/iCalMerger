@@ -55,10 +55,14 @@ type Source struct {
 }
 
 type Config struct {
-	WebHook string   `yaml:"webhook"`
-	Adress  string   `yaml:"adress"`
-	Port    string   `yaml:"port"`
-	Sources []Source `yaml:"sources"`
+	WebHook  string   `yaml:"webhook"`
+	Hostname string   `yaml:"hostname"`
+	Port     string   `yaml:"port"`
+	Sources  []Source `yaml:"sources"`
+}
+
+var defaultConfig = Config{
+	Port: "4040",
 }
 
 func LoadConfig(file_path string) (*Config, error) {
@@ -73,5 +77,10 @@ func LoadConfig(file_path string) (*Config, error) {
 	if e != nil {
 		return nil, e
 	}
+
+	if config.Port == "" {
+		config.Port = defaultConfig.Port
+	}
+
 	return &config, nil
 }
