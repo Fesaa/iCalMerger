@@ -30,4 +30,4 @@ jobs:
             context: .
             file: ./Dockerfile
             push: true
-            tags: ameliaah/ical-merger:!mkdir -p %:h:latest
+            tags: ameliaah/ical-merger:latest
