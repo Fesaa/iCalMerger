@@ -1,6 +1,7 @@
 package ical
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/Fesaa/ical-merger/config"
@@ -83,6 +84,7 @@ func (c *LoadediCal) filterFirstOfDay(event *ics.VEvent) bool {
 		return false
 	}
 
+	fmt.Printf("start: %v; current: %v\n", start.Day(), c.currentDay)
 	first := start.Day() > c.currentDay
 	c.currentDay = start.Day()
 	return first
@@ -102,6 +104,7 @@ func (c *LoadediCal) filterFirstOfMonth(event *ics.VEvent) bool {
 func (c *LoadediCal) filterFirstOfYear(event *ics.VEvent) bool {
 	start, e := event.GetStartAt()
 	if e != nil {
+		fmt.Println(e)
 		return false
 	}
 
