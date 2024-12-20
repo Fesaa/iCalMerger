@@ -21,6 +21,10 @@ func main() {
 		panic(e)
 	}
 
+	if c.WebHook == "" {
+		log.Log.Warn("No webhook configured, will not send alerts")
+	}
+
 	mux := http.NewServeMux()
 
 	for _, s := range c.Sources {
@@ -30,8 +34,9 @@ func main() {
 		mux.HandleFunc(fmt.Sprintf("/%s.ics", s.EndPoint), handler.IcsHandler)
 	}
 
-	log.Log.Info("Starting server on", c.Adress+":"+c.Port)
-	e = http.ListenAndServe(c.Adress+":"+c.Port, mux)
+	host := c.Hostname + ":" + c.Port
+	log.Log.Info("Starting server on", host)
+	e = http.ListenAndServe(host, mux)
 	if errors.Is(e, http.ErrServerClosed) {
 		log.Log.Info("Server died: ", e)
 	} else {
