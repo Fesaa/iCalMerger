@@ -9,11 +9,10 @@ import (
 )
 
 func (ical *LoadediCal) Check(event *ics.VEvent) bool {
-	s := ical.source
-	if s.Rules == nil || len(s.Rules) == 0 {
+	if len(ical.source.Rules) == 0 {
 		return true
 	}
-	for _, rule := range s.Rules {
+	for _, rule := range ical.source.Rules {
 		if ical.apply(&rule, event) {
 			return true
 		}
@@ -21,103 +20,92 @@ func (ical *LoadediCal) Check(event *ics.VEvent) bool {
 	return false
 }
 
-var checks = map[string]func(r *config.Rule, input string) bool{
-	"CONTAINS": func(r *config.Rule, input string) bool {
-		input = r.Transform(input)
-		for _, s := range r.Data {
-			s = r.Transform(s)
-			if strings.Contains(input, s) {
-				return true
-			}
-		}
-		return false
-	},
-	"NOT_CONTAINS": func(r *config.Rule, input string) bool {
-		input = r.Transform(input)
-		for _, s := range r.Data {
-			s = r.Transform(s)
-			if strings.Contains(input, s) {
-				return false
-			}
-		}
-		return true
-	},
-	"EQUALS": func(r *config.Rule, input string) bool {
-		input = r.Transform(input)
-		for _, s := range r.Data {
-			s = r.Transform(s)
-			if input == s {
-				return true
-			}
-		}
-		return false
-	},
-	"NOT_EQUALS": func(r *config.Rule, input string) bool {
-		input = r.Transform(input)
-		for _, s := range r.Data {
-			s = r.Transform(s)
-			if input == s {
-				return false
-			}
-		}
-		return true
-	},
-}
-
-var special_checks = map[string]func(ical *LoadediCal, event *ics.VEvent) (*bool, error){
-	"FIRST_OF_DAY": func(ical *LoadediCal, event *ics.VEvent) (*bool, error) {
-		start, e := event.GetStartAt()
-		if e != nil {
-			return nil, e
-		}
-
-		first := start.Day() > ical.currentDay
-		log.Log.Debug(start.Day(), ical.currentDay, first, event.Id())
-		ical.currentDay = start.Day()
-		return &first, nil
-	},
-	"FIRST_OF_MONTH": func(ical *LoadediCal, event *ics.VEvent) (*bool, error) {
-		start, e := event.GetStartAt()
-		if e != nil {
-			return nil, e
-		}
-
-		first := start.Month() > ical.currentMonth
-		ical.currentMonth = start.Month()
-		return &first, nil
-	},
-	"FIRST_OF_YEAR": func(ical *LoadediCal, event *ics.VEvent) (*bool, error) {
-		start, e := event.GetStartAt()
-		if e != nil {
-			return nil, e
-		}
-
-		first := start.Year() > ical.currentYear
-		ical.currentYear = start.Year()
-		return &first, nil
-	},
-}
-
 func (ical *LoadediCal) apply(r *config.Rule, event *ics.VEvent) bool {
-	check, ok := checks[r.Check]
-	if !ok {
-		special_check, ok := special_checks[r.Check]
-		if !ok {
-			log.Log.Warn("Could not complete check for", r.Name, "because check", r.Check, "was not found")
-			return false
-		}
-		b, e := special_check(ical, event)
-		if e != nil {
-			return false
-		}
-		return *b
+	switch r.Check {
+	case filterContainsTerm:
+		return ical.filterContains(r, event)
+	case filterNotContainsTerm:
+		return ical.filterNotContains(r, event)
+	case filterEqualsTerm:
+		return ical.filterEquals(r, event)
+	case filterNotEqualsTerm:
+		return ical.filterNotEquals(r, event)
+	case filterFirstOfDayTerm:
+		return ical.filterFirstOfDay(event)
+	case filterFirstOfMonthTerm:
+		return ical.filterFirstOfMonth(event)
+	case filterFirstOfYearTerm:
+		return ical.filterFirstOfYear(event)
+	default:
 	}
+	log.Log.Warn("Could not complete check for", r.Name, "because check", r.Check, "was not found")
+	return false
+}
 
-	comp := event.GetProperty(ics.ComponentProperty(r.Component))
-	if comp == nil {
-		log.Log.Warn("Could not complete check for", r.Name, "because component", r.Component, "was not found")
+const (
+	filterContainsTerm     = "CONTAINS"
+	filterNotContainsTerm  = "NOT_CONTAINS"
+	filterEqualsTerm       = "EQUALS"
+	filterNotEqualsTerm    = "NOT_EQUALS"
+	filterFirstOfDayTerm   = "FIRST_OF_DAY"
+	filterFirstOfMonthTerm = "FIRST_OF_MONTH"
+	filterFirstOfYearTerm  = "FIRST_OF_YEAR"
+)
+
+func (c *LoadediCal) filterContains(r *config.Rule, event *ics.VEvent) bool {
+	for _, s := range r.Data {
+		if strings.Contains(r.Transform(event.GetProperty(ics.ComponentProperty(r.Component)).Value), r.Transform(s)) {
+			return true
+		}
+	}
+	return false
+}
+func (c *LoadediCal) filterNotContains(r *config.Rule, event *ics.VEvent) bool {
+	return !c.filterContains(r, event)
+}
+
+func (c *LoadediCal) filterEquals(r *config.Rule, event *ics.VEvent) bool {
+	for _, s := range r.Data {
+		if r.Transform(event.GetProperty(ics.ComponentProperty(r.Component)).Value) == r.Transform(s) {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *LoadediCal) filterNotEquals(r *config.Rule, event *ics.VEvent) bool {
+	return !c.filterEquals(r, event)
+}
+
+func (c *LoadediCal) filterFirstOfDay(event *ics.VEvent) bool {
+	start, e := event.GetStartAt()
+	if e != nil {
 		return false
 	}
 
-	return check(r, comp.Value)
+	first := start.Day() > c.currentDay
+	c.currentDay = start.Day()
+	return first
+}
+
+func (c *LoadediCal) filterFirstOfMonth(event *ics.VEvent) bool {
+	start, e := event.GetStartAt()
+	if e != nil {
+		return false
+	}
+
+	first := start.Month() > c.currentMonth
+	c.currentMonth = start.Month()
+	return first
+}
+
+func (c *LoadediCal) filterFirstOfYear(event *ics.VEvent) bool {
+	start, e := event.GetStartAt()
+	if e != nil {
+		return false
+	}
+
+	first := start.Year() > c.currentYear
+	c.currentYear = start.Year()
+	return first
 }
