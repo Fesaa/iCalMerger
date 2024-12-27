@@ -1,10 +1,13 @@
 package config
 
 import (
+	"fmt"
+	"net/url"
 	"os"
+	"slices"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type Rule struct {
@@ -23,13 +26,6 @@ func (r *Rule) Transform(s string) string {
 	return strings.ToLower(s)
 }
 
-type SourceInfo struct {
-	Name      string     `yaml:"name"`
-	Url       string     `yaml:"url"`
-	Rules     []Rule     `yaml:"rules,omitempty"`
-	Modifiers []Modifier `yaml:"modifiers,omitempty"`
-}
-
 type Action string
 
 const (
@@ -45,13 +41,6 @@ type Modifier struct {
 	Action    Action `yaml:"action"`
 	Data      string `yaml:"data"`
 	Filters   []Rule `yaml:"rules,omitempty"`
-}
-
-type Source struct {
-	EndPoint  string       `yaml:"end_point"`
-	Heartbeat int          `yaml:"heartbeat"`
-	XWRName   string       `yaml:"xwr_name"`
-	Info      []SourceInfo `yaml:"info"`
 }
 
 type Config struct {
@@ -78,9 +67,81 @@ func LoadConfig(file_path string) (*Config, error) {
 		return nil, e
 	}
 
-	if config.Port == "" {
-		config.Port = defaultConfig.Port
+	config.setDefaults()
+
+	if err := config.validate(); err != nil {
+		return nil, err
 	}
 
 	return &config, nil
+}
+
+func (c *Config) setDefaults() {
+	if c.Port == "" {
+		c.Port = defaultConfig.Port
+	}
+}
+
+func (c *Config) validate() error {
+	endpoints := []string{}
+	for i, source := range c.Sources {
+		// Ensure that the endpoint is unique
+		if slices.Contains(endpoints, source.EndPoint) {
+			return fmt.Errorf("Source %d: EndPoint is not unique", i)
+		}
+		endpoints = append(endpoints, source.EndPoint)
+
+		if err := source.validate(); err != nil {
+			return fmt.Errorf("Source %d: %s", i, err)
+		}
+	}
+
+	return nil
+}
+
+type Source struct {
+	enabled bool // used for ensuring uniqueness
+
+	EndPoint  string       `yaml:"end_point"`
+	Heartbeat int          `yaml:"heartbeat"`
+	XWRName   string       `yaml:"xwr_name"`
+	Info      []SourceInfo `yaml:"info"`
+}
+
+func (c *Source) validate() error {
+	for i, info := range c.Info {
+		if err := info.validate(); err != nil {
+			return fmt.Errorf("Info %d: %s", i, err)
+		}
+	}
+
+	return nil
+}
+
+type SourceInfo struct {
+	Name      string     `yaml:"name"`
+	Url       string     `yaml:"url"`
+	Rules     []Rule     `yaml:"rules,omitempty"`
+	Modifiers []Modifier `yaml:"modifiers,omitempty"`
+}
+
+func (c *SourceInfo) validate() error {
+	if c.Name == "" {
+		return fmt.Errorf("Name is missing")
+	}
+
+	if c.Url == "" {
+		return fmt.Errorf("URL is missing")
+	}
+
+	u, err := url.Parse(c.Url)
+	if err != nil {
+		return fmt.Errorf("URL is invalid")
+	}
+
+	if u.Hostname() == "" {
+		return fmt.Errorf("URL is invalid (hostname)")
+	}
+
+	return nil
 }

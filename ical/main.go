@@ -6,13 +6,12 @@ import (
 	"time"
 
 	"github.com/Fesaa/ical-merger/config"
-	c "github.com/Fesaa/ical-merger/config"
 	"github.com/Fesaa/ical-merger/log"
 	ics "github.com/arran4/golang-ical"
 )
 
 type LoadediCal struct {
-	source       c.SourceInfo
+	source       config.SourceInfo
 	events       []*ics.VEvent
 	isFiltered   bool
 	currentDay   int
@@ -20,31 +19,31 @@ type LoadediCal struct {
 	currentYear  int
 }
 
-func (iCal *LoadediCal) Events() []*ics.VEvent {
-	return iCal.events
+func (c *LoadediCal) Events() []*ics.VEvent {
+	return c.events
 }
 
-func (iCal *LoadediCal) Source() c.SourceInfo {
-	return iCal.source
+func (c *LoadediCal) Source() config.SourceInfo {
+	return c.source
 }
 
-func (iCal *LoadediCal) FilteredEvents() []*ics.VEvent {
-	if !iCal.isFiltered {
-		iCal.Filter()
+func (c *LoadediCal) FilteredEvents() []*ics.VEvent {
+	if !c.isFiltered {
+		c.Filter()
 	}
 
-	return iCal.events
+	return c.events
 }
 
-func (ical *LoadediCal) Modify(e *ics.VEvent) *ics.VEvent {
-	modifiers := ical.Source().Modifiers
-	if modifiers == nil || len(modifiers) == 0 {
+func (c *LoadediCal) Modify(e *ics.VEvent) *ics.VEvent {
+	modifiers := c.Source().Modifiers
+	if len(modifiers) == 0 {
 		return e
 	}
 
 	for _, modifier := range modifiers {
 		for _, filter := range modifier.Filters {
-			if !ical.apply(&filter, e) {
+			if !c.apply(&filter, e) {
 				return e
 			}
 		}
@@ -54,19 +53,15 @@ func (ical *LoadediCal) Modify(e *ics.VEvent) *ics.VEvent {
 		switch modifier.Action {
 		case config.APPEND:
 			comp.Value += modifier.Data
-			break
 		case config.PREPEND:
 			comp.Value = modifier.Data + comp.Value
-			break
 		case config.REPLACE:
 			comp.Value = modifier.Data
-			break
 		case config.ALARM:
 			a := e.AddAlarm()
 			a.SetAction(ics.ActionDisplay)
 			a.SetTrigger(modifier.Data)
 			a.SetProperty(ics.ComponentPropertyDescription, modifier.Name)
-			break
 		}
 		if modifier.Action != config.ALARM {
 			e.SetProperty(prop, comp.Value)
@@ -75,23 +70,23 @@ func (ical *LoadediCal) Modify(e *ics.VEvent) *ics.VEvent {
 	return e
 }
 
-func (iCal *LoadediCal) Filter() {
-	if iCal.isFiltered {
-		log.Log.Warn("Filtering an already filtered calendar: `", iCal.source.Name, "`")
+func (c *LoadediCal) Filter() {
+	if c.isFiltered {
+		log.Logger.Warn("Filtering an already filtered calendar: `", c.source.Name, "`")
 	}
 	filtered := []*ics.VEvent{}
 
-	for _, event := range iCal.events {
-		if iCal.Check(event) {
-			event := iCal.Modify(event)
+	for _, event := range c.events {
+		if c.Check(event) {
+			event := c.Modify(event)
 			filtered = append(filtered, event)
 		}
 	}
-	iCal.events = filtered
-	iCal.isFiltered = true
+	c.events = filtered
+	c.isFiltered = true
 }
 
-func NewLoadediCal(source c.SourceInfo) (*LoadediCal, error) {
+func NewLoadediCal(source config.SourceInfo) (*LoadediCal, error) {
 	res, e := http.Get(source.Url)
 	if e != nil {
 		return nil, e

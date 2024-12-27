@@ -68,9 +68,9 @@ func TestFilterNotEquals(t *testing.T) {
 	assert.False(t, f(&rule, event))
 }
 
-func TestFilterFirstOfDay(t *testing.T) {
+func TestModifierFirstOfDay(t *testing.T) {
 	ical := &LoadediCal{}
-	f := ical.filterFirstOfDay
+	f := ical.modifierFirstOfDay
 	event := ics.NewEvent("1")
 	event.SetStartAt(time.Now())
 	assert.True(t, f(event))
@@ -79,9 +79,9 @@ func TestFilterFirstOfDay(t *testing.T) {
 	assert.False(t, f(event))
 }
 
-func TestFilterFirstOfMonth(t *testing.T) {
+func TestModifierFirstOfMonth(t *testing.T) {
 	ical := &LoadediCal{}
-	f := ical.filterFirstOfMonth
+	f := ical.modifierFirstOfMonth
 	event := ics.NewEvent("1")
 	event.SetStartAt(time.Now())
 	assert.True(t, f(event))
@@ -89,9 +89,9 @@ func TestFilterFirstOfMonth(t *testing.T) {
 	assert.False(t, f(event))
 }
 
-func TestFilterFirstOfYear(t *testing.T) {
+func TestModifierFirstOfYear(t *testing.T) {
 	ical := &LoadediCal{}
-	f := ical.filterFirstOfYear
+	f := ical.modifierFirstOfYear
 	d := time.Date(2024, time.April, 1, 0, 0, 0, 0, time.UTC)
 	event := ics.NewEvent("1")
 	event.SetStartAt(d)

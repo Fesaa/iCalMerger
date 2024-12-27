@@ -23,16 +23,16 @@ func NewServerHandler(source ical.CustomCalender, url string) *ServerHandler {
 
 func (sh *ServerHandler) updateCache() {
 	now := time.Now()
-	log.Log.Info("One hour since last request, remerging ics files")
-	log.ToWebhook(sh.webhook_url, fmt.Sprintf("[%s] Invalidated cache, remerging ics files", sh.cal.GetSource().XWRName))
+	log.Logger.Info("One hour since last request, remerging ics files")
+	log.Logger.Notify(fmt.Sprintf("[%s] Invalidated cache, remerging ics files", sh.cal.GetSource().XWRName))
 	cal, e := sh.cal.Merge(sh.webhook_url)
 	if e != nil {
-		log.Log.Error("Error merging ical files", e)
-		log.ToWebhook(sh.webhook_url, fmt.Sprintf("[%s] Error merging ical files: "+e.Error(), sh.cal.GetSource().XWRName))
+		log.Logger.Error("Error merging ical files", "error", e)
+		log.Logger.Notify(fmt.Sprintf("[%s] Error merging ical files: %s", sh.cal.GetSource().XWRName, e.Error()))
 		return
 	}
 	sh.cache = cal.Serialize()
-	log.ToWebhook(sh.webhook_url, fmt.Sprintf("[%s] Merged ical files in "+time.Since(now).String(), sh.cal.GetSource().XWRName))
+	log.Logger.Notify(fmt.Sprintf("[%s] Merged ical files in %s", sh.cal.GetSource().XWRName, time.Since(now).String()))
 }
 
 func (sh *ServerHandler) heartbeat() {
@@ -54,6 +54,6 @@ func (sh *ServerHandler) IcsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
-	log.Log.Info("Request took", time.Since(now).Milliseconds(), "ms")
-	log.ToWebhook(sh.webhook_url, fmt.Sprintf("[%s] Served ics file in "+time.Since(now).String(), sh.cal.GetSource().XWRName))
+	log.Logger.Info("Request complete", "elapsed_ms", time.Since(now).Milliseconds())
+	log.Logger.Notify(fmt.Sprintf("[%s] Served ics file in %s", sh.cal.GetSource().XWRName, time.Since(now).String()))
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -13,34 +14,42 @@ import (
 )
 
 func main() {
+	loglevel := os.Getenv("loglevel")
+
+	// Backwards compatibility loglevel
 	args := os.Args[1:]
-	log.Init(len(args) > 0 && args[0] == "-debug")
+	if len(args) > 0 && args[0] == "-debug" {
+		loglevel = "debug"
+	}
 
 	c, e := config.LoadConfig("./config.yaml")
 	if e != nil {
+		slog.Error("Error loading config", "error", e)
 		panic(e)
 	}
 
-	if c.WebHook == "" {
-		log.Log.Warn("No webhook configured, will not send alerts")
-	}
+	// Initialize logger
+	log.Init(loglevel, log.NotificationService{
+		Url:     c.WebHook,
+		Service: log.NotificationServiceTypeDiscord,
+	})
 
 	mux := http.NewServeMux()
 
 	for _, s := range c.Sources {
-		log.Log.Debugf("Adding source %s", s.EndPoint)
+		log.Logger.Debug("Adding source", "source", s.EndPoint)
 		handler := *server.NewServerHandler(ical.FromSource(s), c.WebHook)
 		handler.Bootstrap()
 		mux.HandleFunc(fmt.Sprintf("/%s.ics", s.EndPoint), handler.IcsHandler)
 	}
 
 	host := c.Hostname + ":" + c.Port
-	log.Log.Info("Starting server on", host)
+	log.Logger.Info("Starting server", "host", host)
 	e = http.ListenAndServe(host, mux)
 	if errors.Is(e, http.ErrServerClosed) {
-		log.Log.Info("Server died: ", e)
+		log.Logger.Info("Server died", "error", e)
 	} else {
-		log.Log.Error("Failed to start server")
+		log.Logger.Error("Failed to start server", "error", e)
 		panic(e)
 	}
 }
