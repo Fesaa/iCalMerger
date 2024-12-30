@@ -28,7 +28,7 @@ func (c *CustomCalender) Merge(url string) (*ics.Calendar, error) {
 		cal, er := NewLoadediCal(source)
 		if er != nil {
 			log.Logger.Error("Error loading source", "source_name", source.Name, "error", er)
-			log.Logger.Notify(fmt.Sprintf("[%s] Could not complete request, error loading %s", c.source.XWRName, source.Name+er.Error()))
+			log.Logger.Notify(fmt.Sprintf("[%s] Could not complete request, error loading %s", c.source.Name, source.Name+er.Error()))
 			return nil, er
 		}
 		log.Logger.Info("Loaded events", "events", len(cal.Events()), "source", cal.Source().Name)
@@ -42,7 +42,7 @@ func (c *CustomCalender) Merge(url string) (*ics.Calendar, error) {
 
 func (c *CustomCalender) mergeLoadediCals() *ics.Calendar {
 	calender := ics.NewCalendar()
-	calender.SetXWRCalName(c.source.XWRName)
+	calender.SetXWRCalName(c.source.Name)
 
 	var XWRDesc string = ""
 	for _, iCal := range c.loaded {

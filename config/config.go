@@ -55,31 +55,30 @@ var defaultConfig = Config{
 }
 
 func LoadConfig(file_path string) (*Config, error) {
+	config := &Config{}
+
+	if file_path == "" {
+		file_path = "./config.yaml"
+	}
+
 	content, e := os.ReadFile(file_path)
 	if e != nil {
-		return nil, e
+		return config, e
 	}
 
-	var config Config
-
-	e = yaml.Unmarshal(content, &config)
-	if e != nil {
-		return nil, e
+	if err := yaml.Unmarshal(content, &config); err != nil {
+		return config, err
 	}
 
-	config.setDefaults()
+	if config.Port == "" {
+		config.Port = defaultConfig.Port
+	}
 
 	if err := config.validate(); err != nil {
-		return nil, err
+		return config, err
 	}
 
-	return &config, nil
-}
-
-func (c *Config) setDefaults() {
-	if c.Port == "" {
-		c.Port = defaultConfig.Port
-	}
+	return config, nil
 }
 
 func (c *Config) validate() error {
@@ -87,12 +86,12 @@ func (c *Config) validate() error {
 	for i, source := range c.Sources {
 		// Ensure that the endpoint is unique
 		if slices.Contains(endpoints, source.EndPoint) {
-			return fmt.Errorf("Source %d: EndPoint is not unique", i)
+			return fmt.Errorf(".Source.%d: EndPoint is not unique", i)
 		}
 		endpoints = append(endpoints, source.EndPoint)
 
 		if err := source.validate(); err != nil {
-			return fmt.Errorf("Source %d: %s", i, err)
+			return fmt.Errorf(".Source.%d: %s", i, err)
 		}
 	}
 
@@ -100,18 +99,16 @@ func (c *Config) validate() error {
 }
 
 type Source struct {
-	enabled bool // used for ensuring uniqueness
-
 	EndPoint  string       `yaml:"end_point"`
 	Heartbeat int          `yaml:"heartbeat"`
-	XWRName   string       `yaml:"xwr_name"`
+	Name      string       `yaml:"xwr_name"`
 	Info      []SourceInfo `yaml:"info"`
 }
 
 func (c *Source) validate() error {
 	for i, info := range c.Info {
 		if err := info.validate(); err != nil {
-			return fmt.Errorf("Info %d: %s", i, err)
+			return fmt.Errorf(".Info.%d: %s", i, err)
 		}
 	}
 
@@ -127,7 +124,7 @@ type SourceInfo struct {
 
 func (c *SourceInfo) validate() error {
 	if c.Name == "" {
-		return fmt.Errorf("Name is missing")
+		return fmt.Errorf("name is missing")
 	}
 
 	if c.Url == "" {
