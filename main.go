@@ -30,12 +30,6 @@ func main() {
 	logLevel := os.Getenv("log_level")
 	configFile := os.Getenv("config_file")
 
-	// Backwards compatibility loglevel
-	args := os.Args[1:]
-	if len(args) > 0 && args[0] == "-debug" {
-		logLevel = "debug"
-	}
-
 	// Load config
 	c, e := config.LoadConfig(configFile)
 	if e != nil {
