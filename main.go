@@ -25,7 +25,6 @@ Publishing:
 {{- end }}
 =======================================
 `
-const icsPrefix = ".ics"
 
 func main() {
 	logLevel := os.Getenv("log_level")

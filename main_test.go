@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+const icsPrefix = ".ics"
+
 var now = time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Local)
 
 type TestSuite struct {
