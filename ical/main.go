@@ -72,7 +72,7 @@ func (c *LoadediCal) Modify(e *ics.VEvent) *ics.VEvent {
 
 func (c *LoadediCal) Filter() {
 	if c.isFiltered {
-		log.Logger.Warn("Filtering an already filtered calendar: `", c.source.Name, "`")
+		log.Logger.Warn("Filtering an already filtered calendar", "sourceName", c.source.Name)
 	}
 	filtered := []*ics.VEvent{}
 
