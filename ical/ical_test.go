@@ -9,94 +9,94 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCheck(t *testing.T) {
-	ical := &LoadediCal{
+func newEventWithProperty(p ics.ComponentProperty, c string) *ics.VEvent {
+	e := ics.NewEvent("1")
+	e.SetProperty(p, c)
+	return e
+}
+
+func newEventWithDate(d time.Time) *ics.VEvent {
+	e := ics.NewEvent("1")
+	e.SetStartAt(d)
+	return e
+}
+
+func newCalWithRule(check string, component string, data []string) *LoadediCal {
+	return &LoadediCal{
 		source: config.SourceInfo{
 			Rules: []config.Rule{
-				{Check: filterContainsTerm, Component: "SUMMARY", Data: []string{"Meeting"}},
+				{Check: check, Component: component, Data: data},
 			},
 		},
 	}
+}
 
-	event := ics.NewEvent("1")
-	event.SetProperty(ics.ComponentPropertySummary, "Team Meeting")
+func TestCheck(t *testing.T) {
+	// contains
+	assert.True(t, newCalWithRule(FilterContainsTerm, "SUMMARY", []string{"Meeting"}).Check(newEventWithProperty(ics.ComponentPropertySummary, "Team Meeting")))
+	assert.False(t, newCalWithRule(FilterContainsTerm, "SUMMARY", []string{"Meeting"}).Check(newEventWithProperty(ics.ComponentPropertySummary, "Conference")))
 
-	assert.True(t, ical.Check(event))
+	// not contains
+	assert.True(t, newCalWithRule(FilterNotContainsTerm, "SUMMARY", []string{"Conference"}).Check(newEventWithProperty(ics.ComponentPropertySummary, "Team Meeting")))
+	assert.False(t, newCalWithRule(FilterNotContainsTerm, "SUMMARY", []string{"Conference"}).Check(newEventWithProperty(ics.ComponentPropertySummary, "Conference")))
+
+	// filter equals
+	assert.True(t, newCalWithRule(FilterEqualsTerm, "SUMMARY", []string{"Team Meeting"}).Check(newEventWithProperty(ics.ComponentPropertySummary, "Team Meeting")))
+	assert.False(t, newCalWithRule(FilterEqualsTerm, "SUMMARY", []string{"Team Meeting"}).Check(newEventWithProperty(ics.ComponentPropertySummary, "Team")))
+
+	// filter not equals
+	assert.True(t, newCalWithRule(FilterNotEqualsTerm, "SUMMARY", []string{"Conference"}).Check(newEventWithProperty(ics.ComponentPropertySummary, "Team Meeting")))
+	assert.False(t, newCalWithRule(FilterNotEqualsTerm, "SUMMARY", []string{"Conference"}).Check(newEventWithProperty(ics.ComponentPropertySummary, "Conference")))
+
+	// bad component name
+	assert.False(t, newCalWithRule(FilterContainsTerm, "BAD", []string{"Meeting"}).Check(newEventWithProperty(ics.ComponentPropertySummary, "Team Meeting")))
+	assert.False(t, newCalWithRule(FilterContainsTerm, "", []string{"Meeting"}).Check(newEventWithProperty(ics.ComponentPropertySummary, "Conference")))
 }
 
 func TestFilterContains(t *testing.T) {
 	ical := &LoadediCal{}
-	f := ical.filterContains
 	rule := config.Rule{Component: "SUMMARY", Data: []string{"Meeting"}}
-	event := ics.NewEvent("1")
-	event.SetProperty(ics.ComponentPropertySummary, "Team Meeting")
-	assert.True(t, f(&rule, event))
-	event.SetProperty(ics.ComponentPropertySummary, "Conference")
-	assert.False(t, f(&rule, event))
+	assert.True(t, ical.filterContains(&rule, newEventWithProperty(ics.ComponentPropertySummary, "Team Meeting")))
+	assert.False(t, ical.filterContains(&rule, newEventWithProperty(ics.ComponentPropertySummary, "Conference")))
 }
 
 func TestFilterNotContains(t *testing.T) {
 	ical := &LoadediCal{}
-	f := ical.filterNotContains
 	rule := config.Rule{Component: "SUMMARY", Data: []string{"Conference"}}
-	event := ics.NewEvent("1")
-	event.SetProperty(ics.ComponentPropertySummary, "Team Meeting")
-	assert.True(t, f(&rule, event))
-	event.SetProperty(ics.ComponentPropertySummary, "Conference")
-	assert.False(t, f(&rule, event))
+	assert.True(t, ical.filterNotContains(&rule, newEventWithProperty(ics.ComponentPropertySummary, "Team Meeting")))
+	assert.False(t, ical.filterNotContains(&rule, newEventWithProperty(ics.ComponentPropertySummary, "Conference")))
 }
 
 func TestFilterEquals(t *testing.T) {
 	ical := &LoadediCal{}
-	f := ical.filterEquals
 	rule := config.Rule{Component: "SUMMARY", Data: []string{"Team Meeting"}}
-	event := ics.NewEvent("1")
-	event.SetProperty(ics.ComponentPropertySummary, "Team Meeting")
-	assert.True(t, f(&rule, event))
-	event.SetProperty(ics.ComponentPropertySummary, "Team")
-	assert.False(t, f(&rule, event))
+	assert.True(t, ical.filterEquals(&rule, newEventWithProperty(ics.ComponentPropertySummary, "Team Meeting")))
+	assert.False(t, ical.filterEquals(&rule, newEventWithProperty(ics.ComponentPropertySummary, "Team")))
 }
 
 func TestFilterNotEquals(t *testing.T) {
 	ical := &LoadediCal{}
-	f := ical.filterNotEquals
 	rule := config.Rule{Component: "SUMMARY", Data: []string{"Conference"}}
-	event := ics.NewEvent("1")
-	event.SetProperty(ics.ComponentPropertySummary, "Team Meeting")
-	assert.True(t, f(&rule, event))
-	event.SetProperty(ics.ComponentPropertySummary, "Conference")
-	assert.False(t, f(&rule, event))
+	assert.True(t, ical.filterNotEquals(&rule, newEventWithProperty(ics.ComponentPropertySummary, "Team Meeting")))
+	assert.False(t, ical.filterNotEquals(&rule, newEventWithProperty(ics.ComponentPropertySummary, "Conference")))
 }
 
 func TestModifierFirstOfDay(t *testing.T) {
 	ical := &LoadediCal{}
-	f := ical.modifierFirstOfDay
-	event := ics.NewEvent("1")
-	event.SetStartAt(time.Now())
-	assert.True(t, f(event))
-	event.SetStartAt(time.Now().AddDate(0, 0, 1))
+	assert.True(t, ical.modifierFirstOfDay(newEventWithDate(time.Now())))
 	// skip test fails since current day increments with every event
 	t.Skip()
-	assert.False(t, f(event))
+	assert.False(t, ical.modifierFirstOfDay(newEventWithDate(time.Now().Add(time.Hour*24))))
 }
 
 func TestModifierFirstOfMonth(t *testing.T) {
 	ical := &LoadediCal{}
-	f := ical.modifierFirstOfMonth
-	event := ics.NewEvent("1")
-	event.SetStartAt(time.Now())
-	assert.True(t, f(event))
-	event.SetStartAt(time.Now().AddDate(0, 1, 0))
-	assert.False(t, f(event))
+	assert.True(t, ical.modifierFirstOfMonth(newEventWithDate(time.Now())))
+	assert.False(t, ical.modifierFirstOfMonth(newEventWithDate(time.Now().AddDate(0, 1, 0))))
 }
 
 func TestModifierFirstOfYear(t *testing.T) {
 	ical := &LoadediCal{}
-	f := ical.modifierFirstOfYear
-	d := time.Date(2024, time.April, 1, 0, 0, 0, 0, time.UTC)
-	event := ics.NewEvent("1")
-	event.SetStartAt(d)
-	assert.True(t, f(event))
-	event.SetStartAt(d.AddDate(-5, 0, 0))
-	assert.False(t, f(event))
+	assert.True(t, ical.modifierFirstOfYear(newEventWithDate(time.Now())))
+	assert.False(t, ical.modifierFirstOfYear(newEventWithDate(time.Now().AddDate(-5, 0, 0))))
 }

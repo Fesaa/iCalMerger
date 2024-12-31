@@ -1,12 +1,29 @@
 package ical
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/Fesaa/ical-merger/config"
 	"github.com/Fesaa/ical-merger/log"
 	ics "github.com/arran4/golang-ical"
+)
+
+const (
+	// checks if the event contains any of the strings in the rule
+	FilterContainsTerm = "CONTAINS"
+	// checks if the event does not contain any of the strings in the rule
+	FilterNotContainsTerm = "NOT_CONTAINS"
+	// checks if the event equals any of the strings in the rule
+	FilterEqualsTerm = "EQUALS"
+	// checks if the event does not equal any of the strings in the rule
+	FilterNotEqualsTerm = "NOT_EQUALS"
+
+	// checks if the event is the first of the day
+	ModifierFirstOfDayTerm = "FIRST_OF_DAY"
+	// checks if the event is the first of the month
+	ModifierFirstOfMonthTerm = "FIRST_OF_MONTH"
+	// checks if the event is the first of the year
+	ModifierFirstOfYearTerm = "FIRST_OF_YEAR"
 )
 
 func (c *LoadediCal) Check(event *ics.VEvent) bool {
@@ -24,21 +41,21 @@ func (c *LoadediCal) Check(event *ics.VEvent) bool {
 func (c *LoadediCal) apply(r *config.Rule, event *ics.VEvent) bool {
 	switch r.Check {
 	// Filters
-	case filterContainsTerm:
+	case FilterContainsTerm:
 		return c.filterContains(r, event)
-	case filterNotContainsTerm:
+	case FilterNotContainsTerm:
 		return c.filterNotContains(r, event)
-	case filterEqualsTerm:
+	case FilterEqualsTerm:
 		return c.filterEquals(r, event)
-	case filterNotEqualsTerm:
+	case FilterNotEqualsTerm:
 		return c.filterNotEquals(r, event)
 
 	// Modifiers
-	case modifierFirstOfDayTerm:
+	case ModifierFirstOfDayTerm:
 		return c.modifierFirstOfDay(event)
-	case modifierFirstOfMonthTerm:
+	case ModifierFirstOfMonthTerm:
 		return c.modifierFirstOfMonth(event)
-	case modifierFirstOfYearTerm:
+	case ModifierFirstOfYearTerm:
 		return c.modifierFirstOfYear(event)
 	default:
 	}
@@ -46,25 +63,13 @@ func (c *LoadediCal) apply(r *config.Rule, event *ics.VEvent) bool {
 	return false
 }
 
-const (
-	// Filters
-	filterContainsTerm    = "CONTAINS"
-	filterNotContainsTerm = "NOT_CONTAINS"
-	filterEqualsTerm      = "EQUALS"
-	filterNotEqualsTerm   = "NOT_EQUALS"
-
-	// Modifiers
-	modifierFirstOfDayTerm   = "FIRST_OF_DAY"
-	modifierFirstOfMonthTerm = "FIRST_OF_MONTH"
-	modifierFirstOfYearTerm  = "FIRST_OF_YEAR"
-)
-
 /* Filters */
 
 // filterContains checks if the event contains any of the strings in the rule
 func (c *LoadediCal) filterContains(r *config.Rule, event *ics.VEvent) bool {
 	for _, s := range r.Data {
-		if strings.Contains(r.Transform(event.GetProperty(ics.ComponentProperty(r.Component)).Value), r.Transform(s)) {
+		p := event.GetProperty(ics.ComponentProperty(r.Component))
+		if p != nil && strings.Contains(r.Transform(p.Value), r.Transform(s)) {
 			return true
 		}
 	}
@@ -79,7 +84,8 @@ func (c *LoadediCal) filterNotContains(r *config.Rule, event *ics.VEvent) bool {
 // filterEquals checks if the event equals any of the strings in the rule
 func (c *LoadediCal) filterEquals(r *config.Rule, event *ics.VEvent) bool {
 	for _, s := range r.Data {
-		if r.Transform(event.GetProperty(ics.ComponentProperty(r.Component)).Value) == r.Transform(s) {
+		p := event.GetProperty(ics.ComponentProperty(r.Component))
+		if p != nil && r.Transform(p.Value) == r.Transform(s) {
 			return true
 		}
 	}
@@ -100,7 +106,6 @@ func (c *LoadediCal) modifierFirstOfDay(event *ics.VEvent) bool {
 		return false
 	}
 
-	fmt.Printf("start: %v; current: %v\n", start.Day(), c.currentDay)
 	first := start.Day() > c.currentDay
 	c.currentDay = start.Day()
 	return first
@@ -122,7 +127,6 @@ func (c *LoadediCal) modifierFirstOfMonth(event *ics.VEvent) bool {
 func (c *LoadediCal) modifierFirstOfYear(event *ics.VEvent) bool {
 	start, e := event.GetStartAt()
 	if e != nil {
-		fmt.Println(e)
 		return false
 	}
 
