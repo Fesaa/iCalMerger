@@ -107,6 +107,10 @@ type Source struct {
 }
 
 func (c *Source) validate() error {
+	if c.Heartbeat <= 0 {
+		return fmt.Errorf("heartbeat must be greater than 0")
+	}
+
 	for i, info := range c.Info {
 		if err := info.validate(); err != nil {
 			return fmt.Errorf(".Info.%d: %s", i, err)
