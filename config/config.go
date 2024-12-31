@@ -74,14 +74,14 @@ func LoadConfig(filePath string) (*Config, error) {
 		config.Port = defaultConfig.Port
 	}
 
-	if err := config.validate(); err != nil {
+	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 
 	return config, nil
 }
 
-func (c *Config) validate() error {
+func (c *Config) Validate() error {
 	var endpoints []string
 
 	for i, source := range c.Sources {
@@ -91,7 +91,7 @@ func (c *Config) validate() error {
 		}
 		endpoints = append(endpoints, source.EndPoint)
 
-		if err := source.validate(); err != nil {
+		if err := source.Validate(); err != nil {
 			return fmt.Errorf(".Source.%d: %s", i, err)
 		}
 	}
@@ -106,13 +106,13 @@ type Source struct {
 	Info      []SourceInfo `yaml:"info"`
 }
 
-func (c *Source) validate() error {
+func (c *Source) Validate() error {
 	if c.Heartbeat <= 0 {
 		return fmt.Errorf("heartbeat must be greater than 0")
 	}
 
 	for i, info := range c.Info {
-		if err := info.validate(); err != nil {
+		if err := info.Validate(); err != nil {
 			return fmt.Errorf(".Info.%d: %s", i, err)
 		}
 	}
@@ -127,7 +127,7 @@ type SourceInfo struct {
 	Modifiers []Modifier `yaml:"modifiers,omitempty"`
 }
 
-func (c *SourceInfo) validate() error {
+func (c *SourceInfo) Validate() error {
 	if c.Name == "" {
 		return fmt.Errorf("name is missing")
 	}
