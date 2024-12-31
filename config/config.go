@@ -63,11 +63,11 @@ func LoadConfig(filePath string) (*Config, error) {
 
 	content, e := os.ReadFile(filePath)
 	if e != nil {
-		return config, e
+		return nil, e
 	}
 
 	if err := yaml.Unmarshal(content, &config); err != nil {
-		return config, err
+		return nil, err
 	}
 
 	if config.Port == "" {
@@ -75,14 +75,15 @@ func LoadConfig(filePath string) (*Config, error) {
 	}
 
 	if err := config.validate(); err != nil {
-		return config, err
+		return nil, err
 	}
 
 	return config, nil
 }
 
 func (c *Config) validate() error {
-	endpoints := []string{}
+	var endpoints []string
+
 	for i, source := range c.Sources {
 		// Ensure that the endpoint is unique
 		if slices.Contains(endpoints, source.EndPoint) {
