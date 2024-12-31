@@ -25,7 +25,7 @@ func (sh *ServerHandler) updateCache() {
 	now := time.Now()
 	log.Logger.Info("One hour since last request, remerging ics files")
 	log.Logger.Notify(fmt.Sprintf("[%s] Invalidated cache, remerging ics files", sh.cal.GetSource().Name))
-	cal, e := sh.cal.Merge(sh.webhook_url)
+	cal, e := sh.cal.Merge()
 	if e != nil {
 		log.Logger.Error("Error merging ical files", "error", e)
 		log.Logger.Notify(fmt.Sprintf("[%s] Error merging ical files: %s", sh.cal.GetSource().Name, e.Error()))

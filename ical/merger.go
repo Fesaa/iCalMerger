@@ -22,8 +22,8 @@ func (c *CustomCalender) GetSource() config.Source {
 	return c.source
 }
 
-func (c *CustomCalender) Merge(url string) (*ics.Calendar, error) {
-	cals := []*LoadediCal{}
+func (c *CustomCalender) Merge() (*ics.Calendar, error) {
+	var cals []*LoadediCal
 	for _, source := range c.source.Info {
 		cal, er := NewLoadediCal(source)
 		if er != nil {

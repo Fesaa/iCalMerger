@@ -117,7 +117,7 @@ func (s *TestSuite) TestMergeCals() {
 }
 
 func TestMain(t *testing.T) {
-	log.Init("ERROR", log.NotificationService{})
+	log.Init("ERROR", config.Notification{Service: "none"})
 	suite.Run(t, new(TestSuite))
 }
 

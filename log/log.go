@@ -3,6 +3,8 @@ package log
 import (
 	"log/slog"
 	"os"
+
+	"github.com/Fesaa/ical-merger/config"
 )
 
 type logger struct {
@@ -13,10 +15,9 @@ type logger struct {
 
 var Logger logger
 
-func Init(level string, notify NotificationService) {
+func Init(level string, notify config.Notification) {
 	Logger = logger{
 		levelVar: new(slog.LevelVar),
-		notify:   notify,
 	}
 
 	switch level {
@@ -37,14 +38,14 @@ func Init(level string, notify NotificationService) {
 	}
 	Logger.Logger = slog.New(slog.NewJSONHandler(os.Stdout, &opts))
 
-	if notify.Url != "" {
-		Logger.Info("Notifications enabled", "service", notify.Service)
-	} else {
-		Logger.Info("Notifications disabled")
-	}
+	Logger.notify = NewNotificationService(notify.Service, notify.Url)
 }
 
 func (l *logger) Notify(msg string) {
+	if l.notify == nil {
+		return
+	}
+
 	l.Debug("Sending notification", "message", msg)
-	l.notify.process(msg)
+	l.notify.Emit(msg)
 }

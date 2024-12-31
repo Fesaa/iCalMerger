@@ -4,6 +4,9 @@ webhook:
 hostname: 
 # Port to bind the server to (default 4040)
 port: "4040"
+notification:
+  service: discord
+  url: <URL>
 sources:
 - end_point: filtered_calender
   heartbeat: 60

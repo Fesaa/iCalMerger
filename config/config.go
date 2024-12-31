@@ -35,6 +35,12 @@ const (
 	ALARM   Action = "ALARM"
 )
 
+type NotificationService string
+
+const (
+	NotifyDiscord NotificationService = "DISCORD"
+)
+
 type Modifier struct {
 	Name      string `yaml:"name"`
 	Component string `yaml:"component,omitempty"`
@@ -44,10 +50,12 @@ type Modifier struct {
 }
 
 type Config struct {
-	WebHook  string   `yaml:"webhook"`
-	Hostname string   `yaml:"hostname"`
-	Port     string   `yaml:"port"`
-	Sources  []Source `yaml:"sources"`
+	WebHook  string `yaml:"webhook"`
+	Hostname string `yaml:"hostname"`
+	Port     string `yaml:"port"`
+
+	Notification Notification `yaml:"notification"`
+	Sources      []Source     `yaml:"sources"`
 }
 
 var defaultConfig = Config{
@@ -84,6 +92,13 @@ func LoadConfig(filePath string) (*Config, error) {
 func (c *Config) Validate() error {
 	var endpoints []string
 
+	// Validate notification if set - not required
+	if c.Notification != (Notification{}) {
+		if err := c.Notification.Validate(); err != nil {
+			return fmt.Errorf(".Notification: %s", err)
+		}
+	}
+
 	for i, source := range c.Sources {
 		// Ensure that the endpoint is unique
 		if slices.Contains(endpoints, source.EndPoint) {
@@ -94,6 +109,31 @@ func (c *Config) Validate() error {
 		if err := source.Validate(); err != nil {
 			return fmt.Errorf(".Source.%d: %s", i, err)
 		}
+	}
+
+	return nil
+}
+
+type Notification struct {
+	Url     string `yaml:"url"`
+	Service string `yaml:"service"`
+}
+
+func (n *Notification) Validate() error {
+	if n.Url == "" {
+		return fmt.Errorf("url is missing")
+	}
+
+	if n.Service == "" {
+		return fmt.Errorf("service is missing")
+	}
+
+	n.Service = strings.ToUpper(n.Service)
+	switch NotificationService(n.Service) {
+	case NotifyDiscord:
+		break
+	default:
+		return fmt.Errorf("service is invalid")
 	}
 
 	return nil

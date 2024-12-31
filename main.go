@@ -39,10 +39,7 @@ func main() {
 	host := c.Hostname + ":" + c.Port
 
 	// Initialize logger
-	log.Init(logLevel, log.NotificationService{
-		Url:     c.WebHook,
-		Service: log.NotificationServiceTypeDiscord,
-	})
+	log.Init(logLevel, c.Notification)
 
 	// Generate motd
 	motd, e := generateMotd(host, *c)
