@@ -54,14 +54,14 @@ var defaultConfig = Config{
 	Port: "4040",
 }
 
-func LoadConfig(file_path string) (*Config, error) {
+func LoadConfig(filePath string) (*Config, error) {
 	config := &Config{}
 
-	if file_path == "" {
-		file_path = "./config.yaml"
+	if filePath == "" {
+		filePath = "./config.yaml"
 	}
 
-	content, e := os.ReadFile(file_path)
+	content, e := os.ReadFile(filePath)
 	if e != nil {
 		return config, e
 	}
