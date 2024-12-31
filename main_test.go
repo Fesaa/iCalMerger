@@ -66,8 +66,10 @@ func (s *TestSuite) newMockICalServer() *httptest.Server {
 		}
 
 		var buf bytes.Buffer
-		cal.SerializeTo(&buf)
-		w.Write(buf.Bytes())
+		err := cal.SerializeTo(&buf)
+		require.NoError(s.T(), err)
+		_, err = w.Write(buf.Bytes())
+		require.NoError(s.T(), err)
 	})
 	return httptest.NewServer(mux)
 }
