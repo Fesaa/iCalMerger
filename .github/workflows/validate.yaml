@@ -1,9 +1,12 @@
 name: Validate
 
 on:
+  push:
+    branches:
+      - master
   pull_request:
     branches:
-      - main
+      - master
 
 jobs:
   job:
