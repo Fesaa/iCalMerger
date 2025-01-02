@@ -18,7 +18,7 @@ import (
 const motd = `
 =======================================
 Listen on: {{.Host}}
-Broadcasting notifications to: {{.Config.WebHook}}
+Broadcasting notifications to: {{.Config.Notification.Service}} at {{.Config.Notification.Url}}
 Publishing:
 {{- range .Config.Sources }}
   {{.Name}}: {{$.Host}}/{{.EndPoint}}.ics
@@ -67,7 +67,7 @@ func newServerMux(c *config.Config) *http.ServeMux {
 	// Add sources to server
 	for _, s := range c.Sources {
 		log.Logger.Debug("Adding source", "source", s.EndPoint)
-		handler := *server.NewServerHandler(ical.FromSource(s), c.WebHook)
+		handler := *server.NewServerHandler(ical.FromSource(s))
 		handler.Bootstrap()
 		mux.HandleFunc(fmt.Sprintf("/%s.ics", s.EndPoint), handler.IcsHandler)
 	}
@@ -99,10 +99,6 @@ func generateMotd(host string, conf config.Config) (string, error) {
 	}{
 		Host:   host,
 		Config: conf,
-	}
-
-	if data.Config.WebHook == "" {
-		data.Config.WebHook = "None"
 	}
 
 	if err := motdTmpl.Execute(&b, data); err != nil {

@@ -20,9 +20,11 @@ Configuration is done via a config.yaml file, calenders can be filtered with rul
 Example:
 
 ```yaml
-webhook: <discord url>
 adress: "127.0.0.1"
 port: "4040"
+notifcation:
+  service: discord
+  url: <URL>
 sources:
 - end_point: filtered_calender
   heartbeat: 60

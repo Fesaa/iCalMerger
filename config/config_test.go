@@ -17,7 +17,6 @@ func TestLoadConfig(t *testing.T) {
 	defer os.Remove(tempFile.Name())
 
 	content := strings.Join([]string{
-		"webhook: http://example.com/webhook",
 		"hostname: example.com",
 		"port: 4040",
 	}, "\n")

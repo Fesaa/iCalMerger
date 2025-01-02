@@ -12,13 +12,12 @@ import (
 )
 
 type ServerHandler struct {
-	cal         ical.CustomCalender
-	cache       string
-	webhook_url string
+	cal   ical.CustomCalender
+	cache string
 }
 
-func NewServerHandler(source ical.CustomCalender, url string) *ServerHandler {
-	return &ServerHandler{cal: source, webhook_url: url}
+func NewServerHandler(source ical.CustomCalender) *ServerHandler {
+	return &ServerHandler{cal: source}
 }
 
 func (sh *ServerHandler) updateCache() {

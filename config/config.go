@@ -50,7 +50,6 @@ type Modifier struct {
 }
 
 type Config struct {
-	WebHook  string `yaml:"webhook"`
 	Hostname string `yaml:"hostname"`
 	Port     string `yaml:"port"`
 
