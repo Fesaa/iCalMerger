@@ -3,6 +3,10 @@
 Very simple web server used to merge and filter .ics files provided by a url. 
 Configuration is done via a config.yaml file, calenders can be filtered with rules which must point to a component (Defined [here](https://pkg.go.dev/github.com/arran4/golang-ical#Property)) and use a specific [check](ical/checks.go#L24).
 
+## Docker
+
+A docker container is provided at `ameliaah/ical-merger:latest`, mount the config at `/app/config.yaml` and expose the port you desire if needed.
+
 ## Quick Start
 
 1. Copy the `config.example.yaml` to `config.yaml`
@@ -10,7 +14,8 @@ Configuration is done via a config.yaml file, calenders can be filtered with rul
 3. Run the application
 
     ```bash
-    go run .
+    go build -o ical-merger
+    ./ical-merger
     ```
 
 4. Check the icals `http://127.0.0.1:4040/filtered_calender.ics` and `http://127.0.0.1:4040/full_calender.ics`
