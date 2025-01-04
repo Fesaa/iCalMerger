@@ -27,6 +27,12 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	// Health check
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	// Add sources
 	for _, s := range c.Sources {
 		log.Log.Debugf("Adding source %s", s.EndPoint)
 		handler := *server.NewServerHandler(ical.FromSource(s), c.WebHook)
