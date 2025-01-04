@@ -22,7 +22,7 @@ func NewServerHandler(source ical.CustomCalender) *ServerHandler {
 
 func (sh *ServerHandler) updateCache() {
 	now := time.Now()
-	log.Logger.Info("One hour since last request, remerging ics files")
+	log.Logger.Info(fmt.Sprintf("[%s] heratbeat - remerging", sh.cal.GetSource().Name))
 	log.Logger.Notify(fmt.Sprintf("[%s] Invalidated cache, remerging ics files", sh.cal.GetSource().Name))
 	cal, e := sh.cal.Merge()
 	if e != nil {
