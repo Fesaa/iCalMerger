@@ -1,5 +1,7 @@
 package log
 
+import "strings"
+
 const (
 	NotificationServiceTypeDiscord = "discord"
 )
@@ -7,7 +9,7 @@ const (
 func NewNotificationService(service string, url string) NotificationService {
 	var s NotificationService
 
-	switch service {
+	switch strings.ToLower(service) {
 	case NotificationServiceTypeDiscord:
 		s = &DiscordNotification{}
 	default:
