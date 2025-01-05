@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/Fesaa/ical-merger/config"
+	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoadConfig(t *testing.T) {
@@ -19,6 +21,13 @@ func TestLoadConfig(t *testing.T) {
 	content := strings.Join([]string{
 		"hostname: example.com",
 		"port: 4040",
+		"sources:",
+		"  - xwr_name: Source1",
+		"    end_point: /endpoint1",
+		"    heartbeat: 60",
+		"    info:",
+		"      - name: Info1",
+		"        url: http://example.com/info1",
 	}, "\n")
 
 	if _, err := tempFile.Write([]byte(content)); err != nil {
@@ -33,9 +42,10 @@ func TestLoadConfig(t *testing.T) {
 
 func TestConfigValidation(t *testing.T) {
 	cfg := &config.Config{
+		Port: "4040",
 		Sources: []config.Source{
 			{
-				EndPoint:  "http://example.com/endpoint1",
+				EndPoint:  "/endpoint1",
 				Heartbeat: 60,
 				Name:      "Source1",
 				Info: []config.SourceInfo{
@@ -46,7 +56,7 @@ func TestConfigValidation(t *testing.T) {
 				},
 			},
 			{
-				EndPoint:  "http://example.com/endpoint2",
+				EndPoint:  "/endpoint2",
 				Heartbeat: 60,
 				Name:      "Source2",
 				Info: []config.SourceInfo{
@@ -58,15 +68,26 @@ func TestConfigValidation(t *testing.T) {
 			},
 		},
 	}
-
-	err := cfg.Validate()
+	validate := validator.New()
+	err := validate.Struct(cfg)
 	assert.NoError(t, err)
+	// Test port validation
+	cfg.Port = ""
+	err = validate.Struct(cfg)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "'Port' failed on the 'number'")
+	// Test unique source endpoint
+	cfg.Port = "4040"
+	cfg.Sources[1].EndPoint = "/endpoint1"
+	err = validate.Struct(cfg)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "'Sources' failed on the 'unique'")
 }
 
 func TestSourceValidation(t *testing.T) {
 	source := &config.Source{
-		EndPoint:  "http://example.com/endpoint",
-		Heartbeat: 60,
+		EndPoint:  "/endpoint",
+		Heartbeat: 1,
 		Name:      "Source",
 		Info: []config.SourceInfo{
 			{
@@ -75,27 +96,25 @@ func TestSourceValidation(t *testing.T) {
 			},
 		},
 	}
-
-	err := source.Validate()
-	assert.NoError(t, err)
-}
-
-func TestSourceValidationHeartbeat(t *testing.T) {
-	source := &config.Source{
-		EndPoint:  "http://example.com/endpoint",
-		Heartbeat: 0,
-		Name:      "Source",
-		Info: []config.SourceInfo{
-			{
-				Name: "Info",
-				Url:  "http://example.com/info",
-			},
-		},
-	}
-
-	err := source.Validate()
-	assert.Error(t, err)
-	assert.Equal(t, "heartbeat must be greater than 0", err.Error())
+	validate := validator.New()
+	err := validate.Struct(source)
+	require.NoError(t, err)
+	// Test endpoint validation
+	source.EndPoint = ""
+	err = validate.Struct(source)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "'EndPoint' failed on the 'required'")
+	// Test heartbeat validation (0 is the same as missing)
+	source.EndPoint = "/endpoint"
+	source.Heartbeat = 0
+	err = validate.Struct(source)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "'Heartbeat' failed on the 'required'")
+	// Test heartbeat validation
+	source.Heartbeat = -1
+	err = validate.Struct(source)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "'Heartbeat' failed on the 'min'")
 }
 
 func TestSourceInfoValidation(t *testing.T) {
@@ -103,38 +122,18 @@ func TestSourceInfoValidation(t *testing.T) {
 		Name: "Info",
 		Url:  "http://example.com/info",
 	}
-
-	err := info.Validate()
+	validate := validator.New()
+	err := validate.Struct(info)
 	assert.NoError(t, err)
-}
-
-func TestSourceInfoValidationMissingName(t *testing.T) {
-	info := &config.SourceInfo{
-		Url: "http://example.com/info",
-	}
-
-	err := info.Validate()
-	assert.Error(t, err)
-	assert.Equal(t, "name is missing", err.Error())
-}
-
-func TestSourceInfoValidationMissingUrl(t *testing.T) {
-	info := &config.SourceInfo{
-		Name: "Info",
-	}
-
-	err := info.Validate()
-	assert.Error(t, err)
-	assert.Equal(t, "URL is missing", err.Error())
-}
-
-func TestSourceInfoValidationInvalidUrl(t *testing.T) {
-	info := &config.SourceInfo{
-		Name: "Info",
-		Url:  "invalid-url",
-	}
-
-	err := info.Validate()
-	assert.Error(t, err)
-	assert.Equal(t, "URL is invalid (hostname)", err.Error())
+	// Test URL validation
+	info.Url = "invalid-url"
+	err = validate.Struct(info)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "'Url' failed on the 'url'")
+	// Test Name Missing
+	info.Url = "http://example.com/info"
+	info.Name = ""
+	err = validate.Struct(info)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "'Name' failed on the 'required'")
 }
