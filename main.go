@@ -18,7 +18,7 @@ import (
 const motd = `
 =======================================
 Listen on: {{.Host}}
-Broadcasting notifications to: {{.Config.Notification.Service}} at {{.Config.Notification.Url}}
+Broadcasting notifications to: {{if .Config.Notification.Service}}{{.Config.Notification.Service}} at {{.Config.Notification.Url}}{{else}}none{{end}}
 Publishing:
 {{- range .Config.Sources }}
   {{.Name}}: {{$.Host}}/{{.EndPoint}}.ics
