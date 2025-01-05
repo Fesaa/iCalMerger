@@ -22,16 +22,16 @@ func (c *CustomCalender) GetSource() config.Source {
 	return c.source
 }
 
-func (c *CustomCalender) Merge(url string) (*ics.Calendar, error) {
-	cals := []*LoadediCal{}
+func (c *CustomCalender) Merge() (*ics.Calendar, error) {
+	var cals []*LoadediCal
 	for _, source := range c.source.Info {
 		cal, er := NewLoadediCal(source)
 		if er != nil {
-			log.Log.Error("Error loading ", source.Name, ": ", er)
-			log.ToWebhook(url, fmt.Sprintf("[%s] Could not complete request, error loading "+source.Name+er.Error(), c.source.XWRName))
+			log.Logger.Error("Error loading source", "source_name", source.Name, "error", er)
+			log.Logger.Notify(fmt.Sprintf("[%s] Could not complete request, error loading %s", c.source.Name, source.Name+er.Error()))
 			return nil, er
 		}
-		log.Log.Info("Loaded ", len(cal.Events()), " events from ", cal.Source().Name)
+		log.Logger.Info("Loaded events", "events", len(cal.Events()), "source", cal.Source().Name)
 		cals = append(cals, cal)
 	}
 
@@ -42,16 +42,16 @@ func (c *CustomCalender) Merge(url string) (*ics.Calendar, error) {
 
 func (c *CustomCalender) mergeLoadediCals() *ics.Calendar {
 	calender := ics.NewCalendar()
-	calender.SetXWRCalName(c.source.XWRName)
+	calender.SetXWRCalName(c.source.Name)
 
 	var XWRDesc string = ""
 	for _, iCal := range c.loaded {
 		events := iCal.FilteredEvents()
 
 		XWRDesc += iCal.Source().Name + " "
-		log.Log.Info("Adding ", len(events), " events from ", iCal.Source().Name)
+		log.Logger.Info("Adding events ", "events", len(events), "source", iCal.Source().Name)
 		for _, event := range events {
-			log.Log.Debug("Adding event: ", event.Id())
+			log.Logger.Debug("Adding event", "event_id", event.Id())
 			calender.AddVEvent(event)
 		}
 	}
