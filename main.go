@@ -26,6 +26,26 @@ Publishing:
 =======================================
 `
 
+const healthCheckEndpoint = "/health"
+
+func healthCheckCmd(c *config.Config) {
+	host := c.Hostname + ":" + c.Port
+	if c.Hostname == "" {
+		host = "localhost" + host
+	}
+
+	// Check if server is up
+	resp, err := http.Get("http://" + host + healthCheckEndpoint)
+	if err != nil {
+		log.Logger.Error("Failed to health check", "error", err)
+		panic(err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		log.Logger.Error("Health check failed", "status", resp.StatusCode)
+		panic(fmt.Errorf("health check failed with status %d", resp.StatusCode))
+	}
+}
+
 func main() {
 	logLevel := os.Getenv("log_level")
 	configFile := os.Getenv("config_file")
@@ -40,6 +60,12 @@ func main() {
 
 	// Initialize logger
 	log.Init(logLevel, c.Notification)
+
+	// Run health check if requested
+	if os.Args[1] == "-health" {
+		healthCheckCmd(c)
+		return
+	}
 
 	// Generate motd
 	motd, e := generateMotd(host, *c)
@@ -63,6 +89,10 @@ func main() {
 
 func newServerMux(c *config.Config) *http.ServeMux {
 	mux := http.NewServeMux()
+
+	mux.HandleFunc(healthCheckEndpoint, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
 	// Add sources to server
 	for _, s := range c.Sources {
