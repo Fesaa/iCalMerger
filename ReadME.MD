@@ -73,3 +73,15 @@ sources:
 These will now be accessible on `http://127.0.0.1:4040/filtered_calender.ics` and `http://127.0.0.1:4040/full_calender.ics`
 
 Quickly made to make my school calender work because my school sucks 😝
+
+## Production
+
+### Health Check
+
+The health check endpoint is available at `/health` and will return a 200 status code if the server is running.
+
+Additionally, a command exists to check the health of the server:
+
+```bash
+./ical-merger -health
+```
