@@ -34,7 +34,6 @@ func healthCheckCmd(c *config.Config) {
 		host = "localhost" + host
 	}
 
-	// Check if server is up
 	resp, err := http.Get("http://" + host + healthCheckEndpoint)
 	if err != nil {
 		log.Logger.Error("Failed to health check", "error", err)
@@ -50,7 +49,6 @@ func main() {
 	logLevel := os.Getenv("log_level")
 	configFile := os.Getenv("config_file")
 
-	// Load config
 	c, e := config.LoadConfig(configFile)
 	if e != nil {
 		slog.Error("Error loading config", "error", e)
@@ -58,16 +56,13 @@ func main() {
 	}
 	host := c.Hostname + ":" + c.Port
 
-	// Initialize logger
 	log.Init(logLevel, c.Notification)
 
-	// Run health check if requested
-	if os.Args[1] == "-health" {
+	if len(os.Args) > 1 && os.Args[1] == "-health" {
 		healthCheckCmd(c)
 		return
 	}
 
-	// Generate motd
 	motd, e := generateMotd(host, *c)
 	if e != nil {
 		slog.Error("Error generating motd", "error", e)
@@ -77,7 +72,6 @@ func main() {
 
 	mux := newServerMux(c)
 
-	// Start server
 	e = http.ListenAndServe(host, mux)
 	if errors.Is(e, http.ErrServerClosed) {
 		log.Logger.Info("Server died", "error", e)
@@ -94,7 +88,6 @@ func newServerMux(c *config.Config) *http.ServeMux {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	// Add sources to server
 	for _, s := range c.Sources {
 		log.Logger.Debug("Adding source", "source", s.EndPoint)
 		handler := *server.NewServerHandler(ical.FromSource(s))
@@ -105,7 +98,6 @@ func newServerMux(c *config.Config) *http.ServeMux {
 	return mux
 }
 
-// generateMotd generates a message of the day
 func generateMotd(host string, conf config.Config) (string, error) {
 	var (
 		err      error
