@@ -51,7 +51,10 @@ func main() {
 
 	c, e := config.LoadConfig(configFile)
 	if e != nil {
-		slog.Error("Error loading config", "error", e)
+		slog.Error("Error loading config")
+		for _, l := range strings.Split(e.Error(), "\n") {
+			slog.Error(l)
+		}
 		panic(e)
 	}
 	host := c.Hostname + ":" + c.Port
